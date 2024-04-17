@@ -25,10 +25,10 @@ simple() {
     sudo apt install -y \
         xorg bspwm picom build-essential apt-transport-https software-properties-common \
         make cmake polybar suckless-tools rofi pass pinentry-gnome3 lua5.4 \
-        ufw rsync unzip curl network-manager xinput feh arandr zathura scrot npm \
+        ufw rsync unzip curl wget wput network-manager xinput feh arandr zathura scrot \
         syncthing htop alsa-utils pulseaudio libavcodec-extra qpdfview inkscape \
-        firefox-esr exfat-fuse libreoffice udiskie mpv lightdm xsecurelock psmisc \
-        brightnessctl
+        exfat-fuse libreoffice udiskie mpv lightdm xsecurelock psmisc \
+        brightnessctl micro zram-tools
 
     # kvm/qemu 
     if [[ $(systemd-detect-virt) = *kvm* ]]; then
@@ -90,26 +90,15 @@ simple() {
         echo ""
     fi
 
-    # mullvad
-    if ! command -v mullvad &> /dev/null; then
-        cd /tmp
-        wget https://mullvad.net/download/app/deb/latest
-        cp latest latest.deb
-        sudo apt install -y ./latest.deb
-        rm latest.deb latest
-        cd
-    else
-        echo ""
-        echo -e "\033[0;35mMullvad is already installed, skipping...\033[0m"
-        echo ""
-    fi
-
     # wezterm
-    if ! command -v wezterm &> /dev/null; then
-        curl -LO https://github.com/wez/wezterm/releases/download/20230408-112425-69ae8472/WezTerm-20230408-112425-69ae8472-Ubuntu20.04.AppImage
-        chmod +x WezTerm-20230408-112425-69ae8472-Ubuntu20.04.AppImage
-        mkdir -p $HOME/.local/bin
-        mv ./WezTerm-20230408-112425-69ae8472-Ubuntu20.04.AppImage $HOME/.local/bin/wezterm
+    if ! command -v c &> /dev/null; then
+        curl -LO https://github.com/wez/wezterm/releases/download/20240203-110809-5046fc22/wezterm-20240203-110809-5046fc22.Ubuntu22.04.deb
+        sudo apt install -y ./wezterm-20240203-110809-5046fc22.Ubuntu22.04.deb
+
+        #curl -LO https://github.com/wez/wezterm/releases/download/20230408-112425-69ae8472/WezTerm-20230408-112425-69ae8472-Ubuntu20.04.AppImage
+        #chmod +x WezTerm-20230408-112425-69ae8472-Ubuntu20.04.AppImage
+        #mkdir -p $HOME/.local/bin
+        #mv ./WezTerm-20230408-112425-69ae8472-Ubuntu20.04.AppImage $HOME/.local/bin/wezterm
     else
         echo ""
         echo -e "\033[0;35mWezTerm is already installed, skipping...\033[0m"
@@ -204,11 +193,17 @@ simple() {
     # ----------------------------------------------------------------------------------------------
 
     echo ""
+    echo -e "\033[1;35mKeyboard delay...\033[0m"
+    echo ""
+    gsettings set org.gnome.desktop.peripherals.keyboard repeat-interval 30
+    gsettings set org.gnome.desktop.peripherals.keyboard delay 250
+
+    echo ""
     echo -e "\033[1;35mSetting up directories and symlinks...\033[0m"
     echo ""
 
     # create missing directories and files
-    mkdir -p ~/.config/{bspwm,sxhkd,wezterm,rofi,rofi-pass,gtkrc-2.0,gtk-3.0,zathura,lightdm}
+    mkdir -p ~/.config/{bspwm,sxhkd,rofi,rofi-pass,gtkrc-2.0,gtk-3.0,zathura,lightdm}
     mkdir -p ~/.icons/default
     touch ~/.icons/default/index.theme
 
@@ -219,7 +214,9 @@ simple() {
     ln -s -f ~/dotfiles/config/mimeapps.list ~/.config/mimeapps.list
     ln -s -f ~/dotfiles/config/bspwm/bspwmrc ~/.config/bspwm/bspwmrc
     ln -s -f ~/dotfiles/config/sxhkd/sxhkdrc ~/.config/sxhkd/sxhkdrc
-    ln -s -f ~/dotfiles/config/wezterm/wezterm.lua ~/.config/wezterm/wezterm.lua
+    ln -s -f ~/dotfiles/config/wezterm ~/.config/wezterm
+    ln -s -f ~/dotfiles/config/kitty ~/.config/kitty
+    
     ln -s -f ~/dotfiles/config/rofi/oner.rasi ~/.config/rofi/oner.rasi
     ln -s -f ~/dotfiles/config/rofi-pass/config ~/.config/rofi-pass/config
     ln -s -f ~/dotfiles/config/zathura/zathurarc ~/.config/zathura/zathurarc
@@ -244,6 +241,12 @@ simple() {
         sudo ufw default deny incoming
         sudo ufw default allow outgoing
         sudo ufw enable
+        sudo ufw allow 22
+        sudo ufw allow 80
+        sudo ufw allow 443
+        sudo ufw allow 1935
+        sudo ufw allow 5900
+
         sudo ufw allow syncthing
     fi
     
